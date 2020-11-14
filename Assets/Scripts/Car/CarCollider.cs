@@ -28,7 +28,7 @@ public class CarCollider : MonoBehaviour
             if (amount > 0)
             {
 
-                var kill = car.removeLife(amount);
+                var kill = car.RemoveHealth(amount);
                 if (!kill)
                 {
                     Debug.Log("You Died");

@@ -12,7 +12,7 @@ public class Healthometer : MonoBehaviour
     {
         slider = gameObject.GetComponent<Slider>();
         car = GetComponentInParent<Car>();
-        setMaxHealth(car.GetLife());
+        setMaxHealth(car.GetHealth());
     }
 
     private void FixedUpdate()
@@ -22,7 +22,7 @@ public class Healthometer : MonoBehaviour
 
     private float GetHealth()
     {
-        return car.GetLife();
+        return car.GetHealth();
     }
 
     public void setMaxHealth(float health)

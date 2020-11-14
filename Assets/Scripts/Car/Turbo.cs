@@ -13,6 +13,7 @@ public class Turbo : MonoBehaviour
     private float POWER;
     private float AMOUNT;
     private float realAmount;
+    private float increaseSpeed = 0.1f;
     private Vector3 direction;
     [SerializeField] private bool isBoosting = false;
 
@@ -29,7 +30,7 @@ public class Turbo : MonoBehaviour
         colliders = transform.GetComponentInChildren<CarColliders>();
         particles = transform.GetComponentInChildren<ParticleManager>();
         POWER = (1f/2f) * car.GetBoost();
-        AMOUNT = 200f + 3 * car.GetBoostAmount();
+        AMOUNT = 200f + 3f * car.GetBoostAmount();
         realAmount = AMOUNT;
         TIME_TO_MAX = (1f / 100f) * car.GetBoostTimeToMax();
         
@@ -40,35 +41,30 @@ public class Turbo : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (realAmount < AMOUNT) realAmount += 0.05f;
+        if (realAmount < AMOUNT) realAmount += 0.1f;
         Boost();
-        direction = colliders.GetHeadCollider().position - colliders.GetTailCollider().position;
     }
 
     public float GetBoost()
     {
         return realAmount;
     }
+    public void ResetBoost()
+    {
+        realAmount = AMOUNT;
+    }
 
     private bool Boost()
     {
         if (realAmount > 0 && car.getEngineEnable() && isBoosting)
         {
+            direction = colliders.GetHeadCollider().position - colliders.GetTailCollider().position;
             _rigidbody.velocity = Vector3.Lerp(_rigidbody.velocity, direction.normalized * POWER, TIME_TO_MAX * Time.deltaTime);
-
-            foreach (ParticleSystem boost in particles.GetBoosts())
-            {
-                boost.Play();
-            }
             realAmount -= 1;
             return true;
         }
         else
         {
-            foreach (ParticleSystem boost in particles.GetBoosts())
-            {
-                boost.Stop();
-            }
             return false;
         }
             
@@ -79,11 +75,19 @@ public class Turbo : MonoBehaviour
     {
         Debug.Log("Turbo : StartBoost");
         isBoosting = true;
+        foreach (ParticleSystem boost in particles.GetBoosts())
+        {
+            boost.Play();
+        }
     }
     public void StopBoost()
     {
         Debug.Log("Turbo : StopBoost");
         isBoosting = false;
+        foreach (ParticleSystem boost in particles.GetBoosts())
+        {
+            boost.Stop();
+        }
     }
 
 }

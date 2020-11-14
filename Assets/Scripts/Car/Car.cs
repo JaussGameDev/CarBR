@@ -13,7 +13,7 @@ public class Car : MonoBehaviour
 
     private const float STRENGH = 60f;
     private const float RESISTANCE = 60f;
-    private const float LIFE = 50f;         //  250 + 2 * this
+    private const float HEALTH = 50f;         //  250 + 2 * this
     private const float SPEED = 100f;       //  2 * this
     private const float POWER = 60f;        //  10 * this
     private const float STEER = 40f;
@@ -25,39 +25,49 @@ public class Car : MonoBehaviour
     private int blinkTime = 5;
 
     [SerializeField] private bool engineOn = false;
-    [SerializeField] private float life;
+    [SerializeField] private float health;
     [SerializeField] private bool isAlive = true;
     [SerializeField] private GameObject cameraUser;
     [SerializeField] private GameObject UI;
+    [SerializeField] float respawnTimer = 0f;
 
 
     [SerializeField] private Transform up;
     [SerializeField] private Transform down;
+    [SerializeField] private CarEngine engine;
+    [SerializeField] private Turbo turbo;
+
+    [SerializeField] private Animator respawnAnimator;
 
     [SerializeField] private TextMeshProUGUI upsideDownText;
     private bool upsideDown;
 
     private void Awake()
     {
-        life = 250 + 3 * LIFE;
+        //SetEngineOn(false);
+        respawnAnimator.enabled = false;
+        ResetHeatlh();
     }
     private void Start()
     {
+        engine = GetComponent<CarEngine>();
+        turbo = GetComponent<Turbo>();
         foreach (TextMeshProUGUI tm in UI.GetComponentsInChildren<TextMeshProUGUI>())
         {
             if (tm.gameObject.name == "upsideDown") upsideDownText = tm;
         }
         engineOn = true;
         particles = transform.GetComponentInChildren<ParticleManager>();
+        UI.SetActive(true);
         upsideDownText.enabled = false;
+        ActiveCamera();
     }
-
+    private void Update()
+    {
+        if (!isAlive && Time.unscaledTime > respawnTimer) Respawn();
+    }
     private void FixedUpdate()
     {
-        //Debug.Log("not pass yet");
-        //Debug.Log("pass");
-        UI.SetActive(true);
-        ActiveCamera();
         CheckReverse();
     }
 
@@ -81,9 +91,17 @@ public class Car : MonoBehaviour
 
     }
 
-    public float GetLife()
+    public float GetHealth()
     {
-        return life;
+        return health;
+    }
+    public void ResetHeatlh()
+    {
+        health = 250f + 3f * HEALTH;
+    }
+    public void ResetBoost()
+    {
+        turbo.ResetBoost();
     }
     public float GetStrengh()
     {
@@ -122,17 +140,17 @@ public class Car : MonoBehaviour
         return isAlive;
     }
 
-    public bool removeLife(float amount)
+    public bool RemoveHealth(float amount)
     {
-        if (amount >= life)
+        if (amount >= health)
         {
-            life = 0f;
+            health = 0f;
             Die();
             return false;
         }
         else
         {
-            life -= amount;
+            health -= amount;
             return true;
         }
     }
@@ -143,6 +161,19 @@ public class Car : MonoBehaviour
         {
             explosion.Play();
         }
+        respawnTimer = Time.unscaledTime + 5.01f;
+        SetEngineOn(false);
+        respawnAnimator.enabled = true;
+        respawnAnimator.Play(0);
+    }
+    public void Respawn()
+    {
+        engine.GetRigidbody().velocity = Vector3.zero;
+        SetAlive(true);
+        ResetHeatlh();
+        ResetBoost();
+        respawnAnimator.enabled = false;
+        FindObjectOfType<Mirror.MainMenu.NetworkSpawnPlayerSystem>().RepawnPlayer(this);
     }
     public void SetAlive(bool b)
     {
@@ -190,7 +221,11 @@ public class Car : MonoBehaviour
 
     public void Flip()
     {
-        if (upsideDown) transform.Rotate(180 * Vector3.forward);
+        if (upsideDown)
+        {
+            engine.GetRigidbody().velocity = Vector3.zero;
+            transform.Rotate(180 * Vector3.forward);
+        }
     }
 
 
